@@ -2,12 +2,13 @@
 
 from os import path
 from argparse import ArgumentParser
+from collections import Callable
 
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 
 from parse_strategy import parse_strategy
-from utils import pp
+from utils import pp, obj_to_d
 
 
 class Compute(object):
@@ -17,18 +18,33 @@ class Compute(object):
     def __init__(self, strategy_file=None):
         self.strategy = parse_strategy(strategy_file)
 
-        self.conn = get_driver(getattr(Provider, self.strategy['provider']))(self.strategy['auth']['username'],
-                                                                             self.strategy['auth']['key'])
+        self.conn = get_driver(getattr(Provider, self.strategy['provider']['primary']['name']))(
+            self.strategy['provider']['primary']['auth']['username'],
+            self.strategy['provider']['primary']['auth']['key']
+        )
+        # TODO: Inherit from `conn`
 
         self.images = self.conn.list_images()
         self.sizes = self.conn.list_sizes()
+
+        self.node = {
+            'size': filter(lambda size: size.name == self.strategy['node']['hardware']['name'],
+                           self.sizes)[0],
+            'image': filter(
+                lambda image: image.name == self.strategy['node']['os']['name'],
+                self.images)[0],
+            'location': filter(
+                lambda location: location.name == self.strategy['node']['location']['name'],
+                self.conn.list_locations())[0]
+        }
 
     get_image_names = lambda self: map(lambda image: image.name, self.images)
     get_image_names.__doc__ = '@returns [\'CentOS - Latest\', \'Ubuntu - Latest\', ...]'
 
     describe_images = lambda self: map(
-        lambda image: {k: (lambda call: call() if hasattr(call, '__call__') else call)(getattr(image, k))
-                       for k in filter(lambda k: not k.startswith('_'), dir(image))}, self.images
+        lambda image: {k: (lambda val: val() if isinstance(val, Callable) else val)(v)
+                       for k, v in obj_to_d(image).iteritems()},
+        self.images
     )
     describe_images.__doc__ = """@returns [{'driver': <libcloud.compute.drivers.softlayer.SoftLayerNodeDriver>,
                                             'extra': {}, 'id': 'CENTOS_LATEST', 'name': 'CentOS - Latest',
@@ -50,10 +66,11 @@ def main():
     args = _build_parser().parse_args()
 
     compute = Compute(args.strategy)
-    pp(compute.get_image_names())
-    pp(compute.describe_images())
+    # pp(compute.get_image_names())
+    # pp(compute.describe_images())
+    # pp(map(lambda c: obj_to_d(c), compute.sizes))
 
-    pp(filter(lambda k: not k.startswith('_'), dir(compute.images[0])))
+    print compute.conn.create_node(name='test1', **compute.node)
 
 
 if __name__ == '__main__':
