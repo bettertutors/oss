@@ -55,7 +55,7 @@ class Compute(object):
 def _build_parser():
     parser = ArgumentParser(description='Deploy/create/manage compute nodes')
     parser.add_argument('-s', '--strategy', help='strategy file',
-                        default=path.join(path.dirname(__file__), 'strategy.json'))
+                        default=path.join(path.dirname(__file__), 'strategy.sample.json'))
     return parser
 
 

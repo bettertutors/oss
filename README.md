@@ -30,7 +30,7 @@ See `strategy.json` for an example config.
       -s STRATEGY, --strategy STRATEGY
                             strategy file
 
-Default strategy located in `strategy.json`.
+Default strategy in `strategy.sample.json`.
 
 ## Future work
 
