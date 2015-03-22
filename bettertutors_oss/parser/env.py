@@ -1,18 +1,8 @@
 from os import environ
-from string import whitespace
+from string import whitespace, punctuation
 
 _quotes = set("'\"")
-_whitespace_or_quotes = set(whitespace + "'\"")
-_whitespace_or_quotes_or_brace = set(whitespace + "'\"}{")
-
-
-def _strip_stack(_stack, run_before=False):
-    if len(_stack) > 1 and _stack[0] in _whitespace_or_quotes_or_brace:
-        del _stack[0]
-    if len(_stack) > 1 and _stack[-1] in _whitespace_or_quotes_or_brace:
-        del _stack[-1]
-    if not run_before:
-        return _strip_stack(_stack, True)
+_whitespace_or_punctuation = set(whitespace + ''.join(c for c in punctuation if c not in ('.', '_')))
 
 
 def _handle_env(_res, _stack):
@@ -22,10 +12,11 @@ def _handle_env(_res, _stack):
     if not _stack:
         return _res
 
-    _strip_stack(_stack)
-
-    (lambda s: s.startswith('env.') and (
-        lambda env: _res.append((env, environ.get(env[len('env.'):], env))))(''.join(_stack)))(''.join(_stack))
+    (lambda env: (
+        lambda find: find != -1 and (lambda _env: _res.append((_env, environ.get(_env[len('env.'):], _env))))(
+            ''.join(c for c in env[find:] if c not in _whitespace_or_punctuation)
+        )
+    )(env.find('env.')))(''.join(_stack))
     del _stack[:]
     return _res
 
