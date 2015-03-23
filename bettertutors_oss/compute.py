@@ -7,7 +7,7 @@ from collections import Callable
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 
-from parse_strategy import parse_strategy
+from Strategy import Strategy
 from utils import pp, obj_to_d
 
 
@@ -16,11 +16,15 @@ class Compute(object):
         and simplification of commands """
 
     def __init__(self, strategy_file=None):
-        self.strategy = parse_strategy(strategy_file)
+        self.strategy = Strategy(strategy_file)
 
-        self.conn = get_driver(getattr(Provider, self.strategy['provider']['primary']['name']))(
-            self.strategy['provider']['primary']['auth']['username'],
-            self.strategy['provider']['primary']['auth']['key']
+        _provider_obj = self.strategy.get_provider()
+        provider_name = _provider_obj.keys()[0]
+        provider = _provider_obj[provider_name]
+
+        self.conn = get_driver(getattr(Provider, provider_name))(
+            provider['auth']['username'],
+            provider['auth']['key']
         )
         # TODO: Inherit from `conn`
 
@@ -28,13 +32,13 @@ class Compute(object):
         self.sizes = self.conn.list_sizes()
 
         self.node = {
-            'size': filter(lambda size: size.name == self.strategy['node']['hardware']['name'],
+            'size': filter(lambda size: size.name == self.strategy.get_hardware(),
                            self.sizes)[0],
             'image': filter(
-                lambda image: image.name == self.strategy['node']['os']['name'],
+                lambda image: image.name == self.strategy.get_os()['name'],
                 self.images)[0],
             'location': filter(
-                lambda location: location.name == self.strategy['node']['location']['name'],
+                lambda location: location.name == self.strategy.get_location()['name'],
                 self.conn.list_locations())[0]
         }
 
@@ -64,7 +68,6 @@ def main():
     Researching below. Haven't decided on deployment nodes yet; e.g.: might get around to Docker.
     """
     args = _build_parser().parse_args()
-    print 'args.strategy =', args.strategy
 
     compute = Compute(args.strategy)
     # pp(compute.get_image_names())
