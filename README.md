@@ -3,11 +3,45 @@ OSS
 
 Provisions: servers, monitors inventory, sets up orchestration, and enables logging and monitoring.
 
+NOTE: This is pre-alpha software, recommend waiting for v1 ^_^
+
 ## Strategy
 
-Strategy includes things like what OS you want, on what provider, on a node with what specifications.
+A JSON file consisting of: provider, hardware, OS and pick strategy.
 
-See `strategy.json` for an example config.
+### Pick strategy [coming soon]
+
+Depends on what you put in the `"pick"` field. Examples:
+
+  - `first`
+  - `random` or `any`
+  - `cheapest`
+  - `priciest`
+  - `first_non_error` [default]
+
+This flexibility allows it to scale elastically across multiple cloud providers, optimising on:
+
+  - Price
+  - Aggregate price
+  - Hardware specifications
+  - Software specifications
+  - Geolocation
+  - Redundancy ratio
+  - &etc.
+
+### Redundancy [coming soon]
+
+Global field `redundancy`. Here are examples of possible values:
+
+  - `1:1` [default]
+  - `2:1`
+  - `+5`
+
+TODO: Workout exactly what this will look like, especially taking georedundancy into consideration.
+
+### Example
+
+See `strategy.sample.json` for an example config.
 
 ## Requirements
 
@@ -31,15 +65,3 @@ See `strategy.json` for an example config.
                             strategy file
 
 Default strategy in `strategy.sample.json`.
-
-## Future work
-
-Support strategies that can scale elastically across multiple cloud providers, optimising on:
-
-  - Price
-  - Aggregate price
-  - Hardware specifications
-  - Software specifications
-  - Geolocation
-  - Redundancy ratio
-  - &etc.

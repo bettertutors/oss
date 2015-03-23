@@ -18,14 +18,12 @@ class Compute(object):
     def __init__(self, strategy_file=None):
         self.strategy = Strategy(strategy_file)
 
-        _provider_obj = self.strategy.get_provider()
-        provider_name = _provider_obj.keys()[0]
-        provider = _provider_obj[provider_name]
+        provider_name, provider = (
+            lambda _provider_obj: (lambda name: (name, _provider_obj[name]))(_provider_obj.keys()[0])
+        )(self.strategy.get_provider())
 
-        self.conn = get_driver(getattr(Provider, provider_name))(
-            provider['auth']['username'],
-            provider['auth']['key']
-        )
+        self.conn = get_driver(getattr(Provider, provider_name))(provider['auth']['username'],
+                                                                 provider['auth']['key'])
         # TODO: Inherit from `conn`
 
         self.images = self.conn.list_images()

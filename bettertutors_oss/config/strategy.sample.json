@@ -1,6 +1,7 @@
 {
     "name": "Default",
     "description": "Default strategy",
+    "version": "0.6.0",
     "node": {
         "os": {
             "options": [

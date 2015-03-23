@@ -7,7 +7,7 @@ from bettertutors_oss.parser.env import parse_out_env
 
 
 class Strategy(object):
-    def __init__(self, strategy_filename=None):  # Default gets propagated down
+    def __init__(self, strategy_filename):  # Default gets propagated down
         self.strategy = self._parse(strategy_filename)
         self.default_pick = self.strategy['default_pick']
 
@@ -24,12 +24,9 @@ class Strategy(object):
         return self._get_next_option(self.strategy['provider'])
 
     @staticmethod
-    def _parse(strategy_file=None):
-        # Is it bad not to use proper default variables?
-
+    def _parse(strategy_filename):
         def inner():
-            with open(strategy_file
-                      or path.join(path.realpath(path.dirname(__file__)), 'config', 'strategy.sample.json'), 'r') as f:
+            with open(strategy_filename, 'r') as f:
                 s = parse_out_env(f.read())
             strategy = loads(s)
 
