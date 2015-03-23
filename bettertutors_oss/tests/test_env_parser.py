@@ -10,7 +10,7 @@ class TestParseEnv(TestCase):
         input_strings = (
             'foo bar "env.bar" can haz', "env.bar",
             '"env.bar"', "'env.bar'",
-            "'env.bar'}", '"env.bar"}'
+            "'env.bar'}", '"env.bar"}', '', 'env.'
         )
         map(lambda input_s: self.assertEqual(parse_out_env(input_s),
                                              input_s.replace('env.bar', environ['bar'])),

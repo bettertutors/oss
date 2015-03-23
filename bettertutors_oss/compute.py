@@ -55,7 +55,7 @@ class Compute(object):
 def _build_parser():
     parser = ArgumentParser(description='Deploy/create/manage compute nodes')
     parser.add_argument('-s', '--strategy', help='strategy file',
-                        default=path.join(path.dirname(__file__), 'strategy.sample.json'))
+                        default=path.join(path.realpath(path.dirname(__file__)), 'config', 'strategy.sample.json'))
     return parser
 
 
@@ -64,6 +64,7 @@ def main():
     Researching below. Haven't decided on deployment nodes yet; e.g.: might get around to Docker.
     """
     args = _build_parser().parse_args()
+    print 'args.strategy =', args.strategy
 
     compute = Compute(args.strategy)
     # pp(compute.get_image_names())

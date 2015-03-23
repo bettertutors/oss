@@ -1,8 +1,27 @@
 from os import environ
-from string import whitespace, punctuation
+from string import whitespace, punctuation, ascii_letters, digits
 
 _quotes = set("'\"")
 _whitespace_or_punctuation = set(whitespace + ''.join(c for c in punctuation if c not in ('.', '_')))
+
+
+def find_in_s(s, enumerable):
+    for i, c in enumerate(s):
+        if c in enumerable:
+            return i
+    return -1
+
+
+def rfind_in_s(s, enumerable):
+    for i, c in reversed(list(enumerate(s))):
+        if c in enumerable:
+            return i
+    return -1
+
+
+_strip_special = lambda s: (
+    lambda strip: (lambda args: s[find_in_s(*args):rfind_in_s(*args) + 1])((s, strip))
+)(ascii_letters + digits)
 
 
 def _handle_env(_res, _stack):
@@ -14,7 +33,7 @@ def _handle_env(_res, _stack):
 
     (lambda env: (
         lambda find: find != -1 and (lambda _env: _res.append((_env, environ.get(_env[len('env.'):], _env))))(
-            ''.join(c for c in env[find:] if c not in _whitespace_or_punctuation)
+            _strip_special(env[find:])
         )
     )(env.find('env.')))(''.join(_stack))
     del _stack[:]

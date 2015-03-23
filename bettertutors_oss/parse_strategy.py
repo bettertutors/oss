@@ -7,12 +7,15 @@ from operator import itemgetter
 
 from bettertutors_oss.utils import pp
 from bettertutors_oss.parser.env import parse_out_env
+from bettertutors_oss.Strategy import Strategy
 
 
 def parse_strategy(strategy_file=None):
+    # Is it bad not to use proper default variables?
+
     def inner():
-        # Is it bad not to use proper default variables?
-        with open(strategy_file or path.join(path.dirname(__file__), 'config', 'strategy.sample.json'), 'r') as f:
+        with open(strategy_file
+                  or path.join(path.realpath(path.dirname(__file__)), 'config', 'strategy.sample.json'), 'r') as f:
             s = parse_out_env(f.read())
         strategy = loads(s)
 
@@ -32,6 +35,7 @@ def parse_strategy(strategy_file=None):
 
 def main():
     strategy = parse_strategy()
+    strategy = Strategy(strategy)
     pp(strategy)
 
 

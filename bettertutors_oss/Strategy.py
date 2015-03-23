@@ -15,6 +15,9 @@ class Strategy(MutableMapping):
     def __getattr__(self, item):
         return self.store[item]
 
+    def __delattr__(self, item):
+        return self.__delitem__(item)
+
     def __delitem__(self, key):
         del self.store[key]
 
@@ -23,10 +26,3 @@ class Strategy(MutableMapping):
 
     def __len__(self):
         return len(self.store)
-
-
-if __name__ == '__main__':
-    strategy = Strategy(a=5, b=6)
-    print 'strategy.a =', strategy.a
-    del strategy.a
-    print 'strategy.a =', strategy.a
