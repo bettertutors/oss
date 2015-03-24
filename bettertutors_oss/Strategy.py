@@ -2,6 +2,7 @@ from json import loads
 from os import path
 from inspect import getmembers, isfunction
 from operator import itemgetter
+from random import randint
 
 from bettertutors_oss.parser.env import parse_out_env
 
@@ -11,17 +12,17 @@ class Strategy(object):
         self.strategy = self._parse(strategy_filename)
         self.default_pick = self.strategy['default_pick']
 
-    def get_os(self):
-        return self._get_next_option(self.strategy['node']['os'])
+    def get_os(self, offset=0):
+        return self._get_next_option(self.strategy['node']['os'], offset)
 
-    def get_hardware(self):
-        return self._get_next_option(self.strategy['node']['hardware'])
+    def get_hardware(self, offset=0):
+        return self._get_next_option(self.strategy['node']['hardware'], offset)
 
-    def get_location(self):
-        return self._get_next_option(self.strategy['node']['location'])
+    def get_location(self, offset=0):
+        return self._get_next_option(self.strategy['node']['location'], offset)
 
-    def get_provider(self):
-        return self._get_next_option(self.strategy['provider'])
+    def get_provider(self, offset=0):
+        return self._get_next_option(self.strategy['provider'], offset)
 
     @staticmethod
     def _parse(strategy_filename):
@@ -43,13 +44,14 @@ class Strategy(object):
 
         return inner()
 
-    def _get_next_option(self, obj, last=0):
+    def _get_next_option(self, obj, offset=0):
         obj = obj.copy()
         pick = obj.get('pick', self.default_pick)
-        return obj['options'][last:][self._pick(pick, len(obj['options']))]
+        return obj['options'][offset:][self._pick(pick, len(obj['options']), offset)]
 
-    _pick = lambda self, algorithm, length, offset=0: {
-        'first': 0
+    _pick = lambda self, algorithm, length, offset: {
+        'first': 0,
+        'random': randint(offset, length)
     }[algorithm]
 
 

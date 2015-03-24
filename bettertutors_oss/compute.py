@@ -4,7 +4,7 @@ from os import path
 from argparse import ArgumentParser
 from collections import Callable
 
-from libcloud.compute.types import Provider
+from libcloud.compute.types import Provider, LibcloudError
 from libcloud.compute.providers import get_driver
 
 from Strategy import Strategy
@@ -15,30 +15,33 @@ class Compute(object):
     """ Light wrapper around libcloud to facilitate integration with strategy files,
         and simplification of commands """
 
-    def __init__(self, strategy_file=None):
-        self.strategy = Strategy(strategy_file)
+    offset = 0
 
+    def init(self):
         provider_name, provider = (
             lambda _provider_obj: (lambda name: (name, _provider_obj[name]))(_provider_obj.keys()[0])
-        )(self.strategy.get_provider())
+        )(self.strategy.get_provider(self.offset))
 
-        self.conn = get_driver(getattr(Provider, provider_name))(provider['auth']['username'],
-                                                                 provider['auth']['key'])
+        conn = get_driver(getattr(Provider, provider_name))(provider['auth']['username'], provider['auth']['key'])
         # TODO: Inherit from `conn`
-
-        self.images = self.conn.list_images()
-        self.sizes = self.conn.list_sizes()
-
-        self.node = {
-            'size': filter(lambda size: size.name == self.strategy.get_hardware(),
-                           self.sizes)[0],
-            'image': filter(
-                lambda image: image.name == self.strategy.get_os()['name'],
-                self.images)[0],
+        images = conn.list_images()
+        sizes = conn.list_sizes()
+        node = {
+            'size': filter(lambda size: size.name == self.strategy.get_hardware(), sizes)[0],
+            'image': filter(lambda image: image.name == self.strategy.get_os()['name'], images)[0],
             'location': filter(
-                lambda location: location.name == self.strategy.get_location()['name'],
-                self.conn.list_locations())[0]
+                lambda location: location.name == self.strategy.get_location()['name'], conn.list_locations())[0]
         }
+
+        return conn, images, sizes, node
+
+    def __init__(self, strategy_file=None):
+        self.strategy = Strategy(strategy_file)
+        self.conn, self.images, self.sizes, self.node = self.init()
+
+    def restrategise(self):
+        self.offset += 1
+        self.conn, self.images, self.sizes, self.node = self.init()
 
     get_image_names = lambda self: map(lambda image: image.name, self.images)
     get_image_names.__doc__ = '@returns [\'CentOS - Latest\', \'Ubuntu - Latest\', ...]'
@@ -72,7 +75,13 @@ def main():
     # pp(compute.describe_images())
     # pp(map(lambda c: obj_to_d(c), compute.sizes))
 
-    print compute.conn.create_node(name='test1', **compute.node)
+    for i in xrange(len(compute.strategy.strategy['provider']['options'])):  # Threshold
+        try:
+            print compute.conn.create_node(name='test1', **compute.node)
+            break  # Exit loop
+        except LibcloudError as e:
+            print e.message  # TODO: Use logging module, log this message before continuing
+            compute.restrategise()
 
 
 if __name__ == '__main__':

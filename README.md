@@ -13,11 +13,10 @@ A JSON file consisting of: provider, hardware, OS and pick strategy.
 
 Depends on what you put in the `"pick"` field. Examples:
 
-  - `first`
+  - `first` [default], takes first non-error
   - `random` or `any`
   - `cheapest`
   - `priciest`
-  - `first_non_error` [default]
 
 This flexibility allows it to scale elastically across multiple cloud providers, optimising on:
 

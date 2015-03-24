@@ -31,6 +31,14 @@
                         "key": "env.SL_KEY"
                     }
                 }
+            },
+            {
+                "EC2_AP_SOUTHEAST2": {
+                    "auth": {
+                        "username": "env.AWS_USER",
+                        "key": "env.AWS_KEY"
+                    }
+                }
             }
         ]
     },
