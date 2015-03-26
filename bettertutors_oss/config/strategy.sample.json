@@ -13,7 +13,7 @@
         },
         "hardware": {
             "options": [
-                "4 CPU, 8GB ram, 100GB"
+                {"name": "4 CPU, 8GB ram, 100GB"}
             ]
         },
         "location": {
@@ -35,8 +35,8 @@
             {
                 "EC2_AP_SOUTHEAST2": {
                     "auth": {
-                        "username": "env.AWS_USER",
-                        "key": "env.AWS_KEY"
+                        "username": "env.AWS_KEY_ID",
+                        "key": "env.AWS_ACCESS_KEY"
                     }
                 }
             }

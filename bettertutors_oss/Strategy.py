@@ -1,10 +1,10 @@
 from json import loads
-from os import path
 from inspect import getmembers, isfunction
 from operator import itemgetter
 from random import randint
 
 from bettertutors_oss.parser.env import parse_out_env
+from bettertutors_oss.utils import raise_f, find_one, find_by_key
 
 
 class Strategy(object):
@@ -23,6 +23,15 @@ class Strategy(object):
 
     def get_provider(self, offset=0):
         return self._get_next_option(self.strategy['provider'], offset)
+
+    def get_option(self, name, enumerable, attr='name'):
+        obj = find_by_key(self.strategy, name)
+        for i in xrange(len(obj['options'])):
+            try:
+                return find_one(getattr(self, 'get_{name}'.format(name=name))(offset=i)[attr], enumerable, attr)
+            except StopIteration:
+                pass
+        raise ValueError('Failed to set "{name}"'.format(name=name))
 
     @staticmethod
     def _parse(strategy_filename):
@@ -44,15 +53,14 @@ class Strategy(object):
 
         return inner()
 
-    def _get_next_option(self, obj, offset=0):
-        obj = obj.copy()
-        pick = obj.get('pick', self.default_pick)
-        return obj['options'][offset:][self._pick(pick, len(obj['options']), offset)]
+    _get_next_option = lambda self, obj, offset=0: obj['options'][offset:][
+        self._pick(obj.get('pick', self.default_pick), len(obj['options']))
+    ]
 
-    _pick = lambda self, algorithm, length, offset: {
+    _pick = lambda self, algorithm, length: {
         'first': 0,
-        'random': randint(offset, length)
-    }[algorithm]
+        'random': randint(0, length)
+    }[algorithm] if length else raise_f(ValueError, '`_pick` performed on empty list')
 
 
 if __name__ == '__main__':
