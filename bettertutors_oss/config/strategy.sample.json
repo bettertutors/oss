@@ -13,7 +13,8 @@
         },
         "hardware": {
             "options": [
-                {"name": "4 CPU, 8GB ram, 100GB"}
+                {"name": "4 CPU, 8GB ram, 100GB"},
+                {"id": "t1.micro"}
             ]
         },
         "location": {

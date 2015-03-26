@@ -64,6 +64,7 @@ def main():
     # pp(map(lambda c: obj_to_d(c), compute.sizes))
 
     for i in xrange(len(compute.strategy.strategy['provider']['options'])):  # Threshold
+        print 'Attempting to create node on:', compute.strategy.get_provider().keys()[0]
         try:
             print compute.create_node(name='test1', **compute.node)
             break  # Exit loop

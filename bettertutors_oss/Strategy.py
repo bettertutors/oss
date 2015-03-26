@@ -4,7 +4,7 @@ from operator import itemgetter
 from random import randint
 
 from bettertutors_oss.parser.env import parse_out_env
-from bettertutors_oss.utils import raise_f, find_one, find_by_key
+from bettertutors_oss.utils import raise_f, find_one, find_by_key, find_common_d, obj_to_d
 
 
 class Strategy(object):
@@ -24,11 +24,12 @@ class Strategy(object):
     def get_provider(self, offset=0):
         return self._get_next_option(self.strategy['provider'], offset)
 
-    def get_option(self, name, enumerable, attr='name'):
-        obj = find_by_key(self.strategy, name)
-        for i in xrange(len(obj['options'])):
+    def get_option(self, name, enumerable):
+        for i in xrange(len(find_by_key(self.strategy, name)['options'])):
             try:
-                return find_one(getattr(self, 'get_{name}'.format(name=name))(offset=i)[attr], enumerable, attr)
+                return find_common_d(
+                    ds=enumerable, target_d=getattr(self, 'get_{name}'.format(name=name))(offset=i)
+                )
             except StopIteration:
                 pass
         raise ValueError('Failed to set "{name}"'.format(name=name))
