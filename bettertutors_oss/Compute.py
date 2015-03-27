@@ -2,14 +2,16 @@
 
 from os import path
 from argparse import ArgumentParser
-from collections import Callable
-from itertools import ifilter
 
 from libcloud.compute.types import Provider, LibcloudError
 from libcloud.compute.providers import get_driver
+from libcloud import security
 
 from Strategy import Strategy
 from utils import pp, obj_to_d, find_one
+
+# AWS Certificates are acting up, remove this in production:
+security.VERIFY_SSL_CERT = False
 
 
 class Compute(object):
@@ -18,11 +20,13 @@ class Compute(object):
 
     offset = 0
     node = None
+    provider_name = None
 
     def set_node(self):
         provider_name, provider = (
             lambda _provider_obj: (lambda name: (name, _provider_obj[name]))(_provider_obj.keys()[0])
         )(self.strategy.get_provider(self.offset))
+        self.provider_name = provider_name
 
         # TODO: Inherit from `conn`
         (lambda class_: tuple(setattr(self, attr, getattr(class_, attr))
@@ -32,7 +36,7 @@ class Compute(object):
 
         self.node = {
             'size': self.strategy.get_option('hardware', self.list_sizes()),
-            'image': self.strategy.get_option('os', self.list_images()),
+            'image': self.strategy.get_option('image', self.list_images()),
             'location': self.strategy.get_option('location', self.list_locations())
         }
 
@@ -59,17 +63,14 @@ def main():
     args = _build_parser().parse_args()
 
     compute = Compute(args.strategy)
-    # pp(compute.get_image_names())
-    # pp(compute.describe_images())
-    # pp(map(lambda c: obj_to_d(c), compute.sizes))
 
     for i in xrange(len(compute.strategy.strategy['provider']['options'])):  # Threshold
-        print 'Attempting to create node on:', compute.strategy.get_provider().keys()[0]
+        print 'Attempting to create node on:', compute.provider_name
         try:
             print compute.create_node(name='test1', **compute.node)
             break  # Exit loop
         except LibcloudError as e:
-            print e.message  # TODO: Use logging module, log this message before continuing
+            print e.message, '\n'  # TODO: Use logging module, log this message before continuing
             compute.restrategise()
 
 

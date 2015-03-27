@@ -12,8 +12,8 @@ class Strategy(object):
         self.strategy = self._parse(strategy_filename)
         self.default_pick = self.strategy['default_pick']
 
-    def get_os(self, offset=0):
-        return self._get_next_option(self.strategy['node']['os'], offset)
+    def get_image(self, offset=0):
+        return self._get_next_option(self.strategy['node']['image'], offset)
 
     def get_hardware(self, offset=0):
         return self._get_next_option(self.strategy['node']['hardware'], offset)
