@@ -34,12 +34,15 @@ class Strategy(object):
                 pass
         raise ValueError('Failed to set "{name}"'.format(name=name))
 
+    def get_key_pair(self, name, offset=0):
+        return self._get_next_option(self.strategy['provider'], offset)
+
     @staticmethod
     def _parse(strategy_filename):
         def inner():
             with open(strategy_filename, 'r') as f:
                 s = parse_out_env(f.read())
-            strategy = loads(s)
+            strategy = loads(s.replace('\n', '').encode('string_escape'))
 
             function_names = map(itemgetter(0), getmembers(inner, isfunction))
             return {k: (lambda f_name: getattr(inner, f_name)(v) if f_name in function_names else v)(to_f_name(k))

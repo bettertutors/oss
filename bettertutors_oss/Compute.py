@@ -21,18 +21,20 @@ class Compute(object):
     offset = 0
     node = None
     provider_name = None
+    provider = None
+    key_pair = None
 
     def set_node(self):
-        provider_name, provider = (
+        self.provider_name, self.provider = (
             lambda _provider_obj: (lambda name: (name, _provider_obj[name]))(_provider_obj.keys()[0])
         )(self.strategy.get_provider(self.offset))
-        self.provider_name = provider_name
 
         # TODO: Inherit from `conn`
         (lambda class_: tuple(setattr(self, attr, getattr(class_, attr))
                               for attr in filter(lambda _attr: not _attr.startswith('__'),
                                                  dir(class_)))
-         )(get_driver(getattr(Provider, provider_name))(provider['auth']['username'], provider['auth']['key']))
+         )(get_driver(getattr(Provider, self.provider_name))(self.provider['auth']['username'],
+                                                             self.provider['auth']['key']))
 
         self.node = {
             'size': self.strategy.get_option('hardware', self.list_sizes()),
@@ -67,8 +69,13 @@ def main():
     for i in xrange(len(compute.strategy.strategy['provider']['options'])):  # Threshold
         print 'Attempting to create node on:', compute.provider_name
         try:
-            print compute.create_node(name='test1', **compute.node)
-            break  # Exit loop
+            if compute.provider_name != 'SOFTLAYER':
+                compute.import_key_pair_from_file(name=compute.provider['ssh']['key_name'],
+                                                  key_file_path=compute.provider['ssh']['public_key_path'])
+                print compute.create_node(name='test1', **compute.node)
+                break  # Exit loop
+            else:
+                raise LibcloudError('Tut tut, stop using SoftLayer!')
         except LibcloudError as e:
             print e.message, '\n'  # TODO: Use logging module, log this message before continuing
             compute.restrategise()

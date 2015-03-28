@@ -1,7 +1,7 @@
 {
     "name": "Default",
     "description": "Default strategy",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "node": {
         "image": {
             "options": [
@@ -34,6 +34,10 @@
                     "auth": {
                         "username": "env.SL_USER",
                         "key": "env.SL_KEY"
+                    },
+                    "ssh": {
+                        "public_key_path": "env.PUBLIC_KEY_PATH",
+                        "key_name": "env.PUBLIC_KEY_NAME"
                     }
                 }
             },
@@ -42,6 +46,10 @@
                     "auth": {
                         "username": "env.AWS_KEY_ID",
                         "key": "env.AWS_ACCESS_KEY"
+                    },
+                    "ssh": {
+                        "public_key_path": "env.PUBLIC_KEY_PATH",
+                        "key_name": "env.PUBLIC_KEY_NAME"
                     }
                 }
             }
