@@ -41,6 +41,10 @@ class Compute(object):
             'image': self.strategy.get_option('image', self.list_images()),
             'location': self.strategy.get_option('location', self.list_locations())
         }
+        if 'security_group' in self.provider:
+            self.node.update({'ex_securitygroup': self.provider['security_group']})
+        if 'key_name' in self.provider:
+            self.node.update({'ex_keyname': self.provider['key_name']})
 
     def __init__(self, strategy_file=None):
         self.strategy = Strategy(strategy_file)
@@ -70,8 +74,12 @@ def main():
         print 'Attempting to create node on:', compute.provider_name
         try:
             if compute.provider_name != 'SOFTLAYER':
-                compute.import_key_pair_from_file(name=compute.provider['ssh']['key_name'],
-                                                  key_file_path=compute.provider['ssh']['public_key_path'])
+                try:
+                    compute.import_key_pair_from_file(name=compute.provider['ssh']['key_name'],
+                                                      key_file_path=compute.provider['ssh']['public_key_path'])
+                except Exception as e:
+                    if not e.message.startswith('InvalidKeyPair.Duplicate'):
+                        raise e
                 print compute.create_node(name='test1', **compute.node)
                 break  # Exit loop
             else:
