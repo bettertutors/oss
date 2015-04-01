@@ -1,61 +1,125 @@
 {
-    "name": "Default",
-    "description": "Default strategy",
-    "version": "0.11.0",
-    "node": {
-        "image": {
-            "options": [
-                {"name": "Ubuntu Linux 14.04 LTS Trusty Tahr - Minimal Install (64 bit)"},
-                {"name": "Ubuntu - Latest (64 bit)"},
-                {"name": "Ubuntu - Latest"},
-                {"name": "ubuntu/images/ebs/ubuntu-trusty-14.04-amd64-server-20150325"},
-                {"name": "ubuntu/images/ebs/ubuntu-trusty-14.04-i386-server-20150325"}
+    "type": "object",
+    "properties": {
+        "node": {
+            "required": [
+                "hardware",
+                "image",
+                "location"
             ],
-            "pick": "first"
-        },
-        "hardware": {
-            "options": [
-                {"name": "4 CPU, 8GB ram, 100GB"},
-                {"id": "t1.micro"}
-            ]
-        },
-        "location": {
-            "options": [
-                {"name": "syd01"},
-                {"name": "ap-southeast-2a"},
-                {"name": "ap-southeast-2b"}
-            ]
-        }
-    },
-    "provider": {
-        "options": [
-            {
-                "SoftLayer": {
-                    "auth": {
-                        "username": "env.SL_USER",
-                        "key": "env.SL_KEY"
-                    },
-                    "ssh": {
-                        "public_key_path": "env.PUBLIC_KEY_PATH",
-                        "key_name": "env.PUBLIC_KEY_NAME"
+            "type": "object",
+            "properties": {
+                "hardware": {
+                    "required": ["options"],
+                    "type": "object",
+                    "properties": {
+                        "options": {
+                            "items": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "id": {"type": "string"}
+                                    }
+                                }
+                            ],
+                            "type": "array"
+                        }
+                    }
+                },
+                "image": {
+                    "required": [
+                        "options",
+                        "pick"
+                    ],
+                    "type": "object",
+                    "properties": {
+                        "options": {
+                            "items": [
+                                {
+                                    "required": ["name"],
+                                    "type": "object",
+                                    "properties": {"name": {"type": "string"}}
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        "pick": {"type": "string"}
+                    }
+                },
+                "location": {
+                    "required": ["options"],
+                    "type": "object",
+                    "properties": {
+                        "options": {
+                            "items": [
+                                {
+                                    "required": ["name"],
+                                    "type": "object",
+                                    "properties": {"name": {"type": "string"}}
+                                }
+                            ],
+                            "type": "array"
+                        }
                     }
                 }
-            },
-            {
-                "EC2_AP_SOUTHEAST2": {
-                    "auth": {
-                        "username": "env.AWS_KEY_ID",
-                        "key": "env.AWS_ACCESS_KEY"
-                    },
-                    "ssh": {
-                        "public_key_path": "env.PUBLIC_KEY_PATH",
-                        "key_name": "env.PUBLIC_KEY_NAME"
-                    },
-                    "security_group": ["ssh_http"],
-                    "key_name": "env.PUBLIC_KEY_NAME"
+            }
+        },
+        "description": {"type": "string"},
+        "default_pick": {"type": "string"},
+        "version": {"type": "string"},
+        "provider": {
+            "required": ["options"],
+            "type": "object",
+            "properties": {
+                "options": {
+                    "items": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "EC2_AP_SOUTHEAST2": {
+                                    "required": [
+                                        "auth",
+                                        "ssh"
+                                    ],
+                                    "type": "object",
+                                    "properties": {
+                                        "security_group": {
+                                            "items": [{"type": "string"}],
+                                            "type": "array"
+                                        },
+                                        "key_name": {"type": "string"},
+                                        "ssh": {
+                                            "required": [
+                                                "key_name",
+                                                "public_key_path"
+                                            ],
+                                            "type": "object",
+                                            "properties": {
+                                                "key_name": {"type": "string"},
+                                                "public_key_path": {"type": "string"}
+                                            }
+                                        },
+                                        "auth": {
+                                            "required": [
+                                                "key",
+                                                "username"
+                                            ],
+                                            "type": "object",
+                                            "properties": {
+                                                "username": {"type": "string"},
+                                                "key": {"type": "string"}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "type": "array"
                 }
             }
-        ]
-    },
-    "default_pick": "first"
+        },
+        "name": {"type": "string"}
+    }
 }
