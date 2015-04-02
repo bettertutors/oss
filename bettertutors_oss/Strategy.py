@@ -57,9 +57,10 @@ class Strategy(object):
 
         return inner()
 
-    _get_next_option = lambda self, obj, offset=0: obj['options'][offset:][
-        self._pick(obj.get('pick', self.default_pick), len(obj['options']))
-    ]
+    _get_next_option = lambda self, obj, offset=0: (
+        lambda idx: obj['options'][offset:][idx] if (idx + offset) < len(obj['options'])
+        else raise_f(ValueError, '`_pick` performed on empty list')
+    )(idx=self._pick(obj.get('pick', self.default_pick), len(obj['options'])))
 
     _pick = lambda self, algorithm, length: {
         'first': 0,

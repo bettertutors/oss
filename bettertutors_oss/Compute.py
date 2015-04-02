@@ -2,6 +2,7 @@
 
 from os import path
 from argparse import ArgumentParser
+from time import sleep
 
 from libcloud.compute.types import Provider, LibcloudError
 from libcloud.compute.providers import get_driver
@@ -72,7 +73,20 @@ class Compute(object):
                 if self.provider_name != 'SOFTLAYER':
                     self.setup_keypair()
                     self.node = self.create_node(name='test1', **self.node_specs)
-                    return self.node
+
+                    threshold = 60
+                    print 'Waiting [up to] 10 minutes for node to come online'
+                    PENDING = 3  # Where do I find the enum?!
+                    while threshold and self.node.state == PENDING:
+                        sleep(10)
+                        threshold -= 1
+                        print 'Waiting another:', threshold * 10, 'seconds. Status is:', self.node.extra['status']
+                    if self.node.state != PENDING:
+                        print 'self.node.state =', self.node.state, "self.node.extra['status'] =", self.node.extra['status']
+                        return self.node
+                    else:
+                        pass
+                        # Maybe kill the node here before going off with next provider?
                 else:
                     pass
                     # Having issues with SoftLayer billing at the moment, will remove condition once resolved.
