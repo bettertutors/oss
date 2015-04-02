@@ -7,16 +7,17 @@ from pip import __file__ as pip_loc
 if __name__ == '__main__':
     package_name = 'bettertutors_oss'
 
-    templates_join = partial(path.join, path.dirname(__file__),
-                             package_name, 'templates')
+    config_join = partial(path.join, path.dirname(__file__),
+                          package_name, 'config')
     install_to = path.join(path.split(path.split(pip_loc)[0])[0],
-                           package_name, 'templates')
+                           package_name, 'config')
 
     setup(
         name=package_name,
         author='Samuel Marks',
-        version='0.12.0',
+        version='0.13.0',
         test_suite=package_name + '.tests',
         packages=find_packages(),
-        package_dir={package_name: package_name}
+        package_dir={package_name: package_name},
+        data_files=[(install_to, [config_join('strategy.sample.json')])]
     )
