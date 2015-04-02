@@ -8,7 +8,7 @@ from bettertutors_oss.utils import raise_f, find_one, find_by_key, find_common_d
 
 
 class Strategy(object):
-    def __init__(self, strategy_filename):  # Default gets propagated down
+    def __init__(self, strategy_filename):
         self.strategy = self._parse(strategy_filename)
         self.default_pick = self.strategy['default_pick']
 

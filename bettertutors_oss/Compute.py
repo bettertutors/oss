@@ -26,7 +26,7 @@ class Compute(object):
     provider_cls = None
     key_pair = None
 
-    def __init__(self, strategy_file=None):
+    def __init__(self, strategy_file):
         self.strategy = Strategy(strategy_file)
         self.set_node()
 
