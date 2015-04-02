@@ -19,40 +19,68 @@ class Compute(object):
         and simplification of commands """
 
     offset = 0
+    node_specs = None
     node = None
     provider_name = None
-    provider = None
+    provider_dict = None
+    provider_cls = None
     key_pair = None
-
-    def set_node(self):
-        self.provider_name, self.provider = (
-            lambda _provider_obj: (lambda name: (name, _provider_obj[name]))(_provider_obj.keys()[0])
-        )(self.strategy.get_provider(self.offset))
-
-        # TODO: Inherit from `conn`
-        (lambda class_: tuple(setattr(self, attr, getattr(class_, attr))
-                              for attr in filter(lambda _attr: not _attr.startswith('__'),
-                                                 dir(class_)))
-         )(get_driver(getattr(Provider, self.provider_name))(self.provider['auth']['username'],
-                                                             self.provider['auth']['key']))
-
-        self.node = {
-            'size': self.strategy.get_option('hardware', self.list_sizes()),
-            'image': self.strategy.get_option('image', self.list_images()),
-            'location': self.strategy.get_option('location', self.list_locations())
-        }
-        if 'security_group' in self.provider:
-            self.node.update({'ex_securitygroup': self.provider['security_group']})
-        if 'key_name' in self.provider:
-            self.node.update({'ex_keyname': self.provider['key_name']})
 
     def __init__(self, strategy_file=None):
         self.strategy = Strategy(strategy_file)
         self.set_node()
 
+    def __getattr__(self, item):
+        return getattr(self.provider_cls, item)
+
+    def set_node(self):
+        self.provider_name, self.provider_dict = (
+            lambda _provider_obj: (lambda name: (name, _provider_obj[name]))(_provider_obj.keys()[0])
+        )(self.strategy.get_provider(self.offset))
+
+        self.provider_cls = get_driver(getattr(Provider, self.provider_name))(self.provider_dict['auth']['username'],
+                                                                              self.provider_dict['auth']['key'])
+
+        self.node_specs = {
+            'size': self.strategy.get_option('hardware', self.list_sizes()),
+            'image': self.strategy.get_option('image', self.list_images()),
+            'location': self.strategy.get_option('location', self.list_locations())
+        }
+        if 'security_group' in self.provider_dict:
+            self.node_specs.update({'ex_securitygroup': self.provider_dict['security_group']})
+        if 'key_name' in self.provider_dict:
+            self.node_specs.update({'ex_keyname': self.provider_dict['key_name']})
+
     def restrategise(self):
         self.offset += 1
         self.set_node()
+
+    def setup_keypair(self):
+        try:
+            self.import_key_pair_from_file(
+                name=self.provider_dict['ssh']['key_name'],
+                key_file_path=self.provider_dict['ssh']['public_key_path']
+            )
+        except Exception as e:
+            if not e.message.startswith('InvalidKeyPair.Duplicate'):
+                raise e
+
+    def provision(self):
+        for i in xrange(len(self.strategy.strategy['provider']['options'])):  # Threshold
+            print 'Attempting to create node on:', self.provider_name
+            try:
+                if self.provider_name != 'SOFTLAYER':
+                    self.setup_keypair()
+                    self.node = self.create_node(name='test1', **self.node_specs)
+                    return self.node
+                else:
+                    pass
+                    # Having issues with SoftLayer billing at the moment, will remove condition once resolved.
+            except LibcloudError as e:
+                print e.message, '\n'  # TODO: Use logging module, log this message before continuing
+
+            self.restrategise()
+        raise LibcloudError('Failed to provision node')
 
 
 def _build_parser():
@@ -63,30 +91,9 @@ def _build_parser():
 
 
 def main():
-    """
-    Researching below. Haven't decided on deployment nodes yet; e.g.: might get around to Docker.
-    """
     args = _build_parser().parse_args()
-
     compute = Compute(args.strategy)
-
-    for i in xrange(len(compute.strategy.strategy['provider']['options'])):  # Threshold
-        print 'Attempting to create node on:', compute.provider_name
-        try:
-            if compute.provider_name != 'SOFTLAYER':
-                try:
-                    compute.import_key_pair_from_file(name=compute.provider['ssh']['key_name'],
-                                                      key_file_path=compute.provider['ssh']['public_key_path'])
-                except Exception as e:
-                    if not e.message.startswith('InvalidKeyPair.Duplicate'):
-                        raise e
-                print compute.create_node(name='test1', **compute.node)
-                break  # Exit loop
-            else:
-                raise LibcloudError('Tut tut, stop using SoftLayer!')
-        except LibcloudError as e:
-            print e.message, '\n'  # TODO: Use logging module, log this message before continuing
-            compute.restrategise()
+    print compute.provision()
 
 
 if __name__ == '__main__':
