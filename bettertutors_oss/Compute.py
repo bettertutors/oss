@@ -9,7 +9,7 @@ from libcloud.compute.providers import get_driver
 from libcloud import security
 
 from Strategy import Strategy
-from utils import pp, obj_to_d, find_one
+from utils import pp, obj_to_d, find_one, ping_port
 
 # AWS Certificates are acting up, remove this in production:
 security.VERIFY_SSL_CERT = False
@@ -74,22 +74,15 @@ class Compute(object):
                     self.setup_keypair()
                     self.node = self.create_node(name='test1', **self.node_specs)
 
-                    threshold = 60
-                    print 'Waiting [up to] 10 minutes for node to come online'
-                    PENDING = 3  # Where do I find the enum?!
-                    while threshold and self.node.state == PENDING:
-                        sleep(10)
-                        threshold -= 1
-                        print 'Waiting another:', threshold * 10, 'seconds. Status is:', self.node.extra['status']
-                    if self.node.state != PENDING:
-                        print 'self.node.state =', self.node.state, "self.node.extra['status'] =", self.node.extra['status']
-                        return self.node
-                    else:
-                        pass
+                    try:
+                        return self.wait_until_running([self.node])
+                    except LibcloudError as e:
+                        print e.message, '\n'  # TODO: Use logging module, log this message before continuing
                         # Maybe kill the node here before going off with next provider?
+                        pass
                 else:
-                    pass
                     # Having issues with SoftLayer billing at the moment, will remove condition once resolved.
+                    pass
             except LibcloudError as e:
                 print e.message, '\n'  # TODO: Use logging module, log this message before continuing
 

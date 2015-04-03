@@ -2,6 +2,8 @@
 
 # FYI: Bad practice to put a utils like this, will push it somewhere else [eventually!]
 
+import socket
+
 from types import DictType, NoneType
 from itertools import ifilter
 from pprint import PrettyPrinter
@@ -60,3 +62,8 @@ def subsequence(many_d):
 find_common_d = lambda target_d, ds: next(d for d in ds
                                           if any(getattr(d, k) == v for k, v in target_d.iteritems()
                                                  if k in obj_to_d(d)))
+
+ping_port = lambda host, port: (lambda s: (lambda res: res or (lambda: (s.close(), True)[1])())(
+    s.connect_ex((host, port))
+))(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+ping_port.__doc__ = """ :returns True on success, [error] number > 0 otherwise """
