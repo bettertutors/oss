@@ -7,6 +7,7 @@ from time import sleep
 from libcloud.compute.types import Provider, LibcloudError
 from libcloud.compute.providers import get_driver
 from libcloud import security
+from libcloud.compute.deployment import SSHKeyDeployment
 
 from Strategy import Strategy
 from utils import pp, obj_to_d, find_one, ping_port
@@ -31,8 +32,8 @@ class Compute(object):
         self.strategy = Strategy(strategy_file)
         self.set_node()
 
-    def __getattr__(self, item):
-        return getattr(self.provider_cls, item)
+    def __getattr__(self, attr):
+        return getattr(self.provider_cls, attr)
 
     def set_node(self):
         self.provider_name, self.provider_dict = (
@@ -66,14 +67,26 @@ class Compute(object):
             if not e.message.startswith('InvalidKeyPair.Duplicate'):
                 raise e
 
-    def provision(self):
+    def provision(self, create_or_deploy='create'):
         for i in xrange(len(self.strategy.strategy['provider']['options'])):  # Threshold
             print 'Attempting to create node on:', self.provider_name
             try:
                 if self.provider_name != 'SOFTLAYER':
                     self.setup_keypair()
-                    self.node = self.create_node(name='test1', **self.node_specs)
-
+                    if create_or_deploy == 'deploy':
+                        with open(self.provider_dict['ssh']['public_key_path'], mode='rt') as f:
+                            ssh_key = f.read()
+                        self.node_specs.update({'deploy': SSHKeyDeployment(ssh_key)})
+                    try:
+                        self.node = getattr(self, '{0}_node'.format(create_or_deploy))(name='test1', **self.node_specs)
+                    except NotImplementedError as e:
+                        error_message = 'deploy_node not implemented for this driver'
+                        if e.message != error_message:
+                            raise
+                        print '{error_message}, so running `create_node` instead.'.format(
+                            error_message=error_message.replace('deploy_node', '`deploy_node`')
+                        )
+                        self.node = self.create_node(name='test1', **self.node_specs)
                     try:
                         return self.wait_until_running([self.node])
                     except LibcloudError as e:
@@ -100,7 +113,7 @@ def _build_parser():
 def main():
     args = _build_parser().parse_args()
     compute = Compute(args.strategy)
-    print compute.provision()
+    print compute.provision('deploy')
 
 
 if __name__ == '__main__':
